@@ -23,10 +23,13 @@ Chatbot with changable llm models and speech-to-text, text-to-speech features.
 
 # Usage
 ```sh 
-git clone ```
+git clone 
+```
 ```sh 
-cd chatbot ```
+cd chatbot 
+```
 ```sh 
-docker-compose up --build ```
+docker-compose up --build 
+```
 
 
