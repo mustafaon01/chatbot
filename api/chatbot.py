@@ -3,10 +3,8 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from sentence_transformers import SentenceTransformer
 from weaviate import Client
 
-
 import json
 import warnings
-import torch
 import dotenv
 import os
 
@@ -76,7 +74,7 @@ class Chatbot:
           weaviate_client.data_object.create(data_object=object_to_store, class_name=self.schema_name)
           logging.info("Loaded to Weaviate successfully.")
         else:
-            logging.info("Question or answer is None.")
+            logging.info("Question and answer is None.")
 
     def generate_response_from_model(self, question):
         try:

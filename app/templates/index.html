@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chatbot</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.8.1/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #555; color: #fff; }
+        .container { position: relative; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .chat-history { position: fixed; top: 0; bottom: 0; left: 0; overflow-y: auto; border-right: 2px solid #ddd; padding: 10px; }
+        .chat-container { margin-left: 200px; padding: 10px; }
+        .message { margin: 5px 0; padding: 10px; border-radius: 5px; }
+        .user { background-color: #666; }
+        .bot { background-color: #888; }
+        .form-container { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background-color: #777; border-radius: 45px; border: 2px solid #ddd; padding: 20px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+    <h2>Chatbot</h2>
+    </div>
+    <div class="container">
+        <div class="chat-history">
+            <h5>Past Chats</h5>
+            {% for chat in chats %}
+            <div><a href="/view_chat/{{ loop.index0 }}">Chat #{{ loop.index }}</a></div>
+            {% endfor %}
+    
+            <a href="/new_chat" class="btn btn-primary mt-2">New Chat</a>
+            <a href="/database" class="btn btn-primary mt-2">View Database</a>
+
+        </div>
+        <div class="chat-container">
+            {% for entry in current_chat %}
+                <div class="message user"><b>User:</b> {{ entry.user_input }}</div>
+                <div class="message bot">
+                    <b>{{entry.model}}:</b> {{ entry.response }}
+                    {% if entry.audio_output_file %}
+                    <audio controls>
+                        <h5>"{{ entry.audio_output_file }}"</h5>
+                        <source src="{{ entry.audio_output_file }}" type="audio/wav">
+                        Your browser does not support the audio element.
+                    </audio>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="form-container">
+        <form id="chatForm" action="/" method="POST" enctype="multipart/form-data">
+            <div class="input-group mb-3">
+                <button type="button" class="btn input-group-text" id="start-recording">
+                    <i class="bi bi-mic"></i>
+                </button>
+                <input type="text" class="form-control" name="user_input" placeholder="Type a message..." required>
+                <input type="file" accept="audio/*" capture style="display: none" name="audio_file" id="audioInput">
+                <select class="form-select" name="model" required>
+                    <option value="microsoft/DialoGPT-medium">microsoft/DialoGPT-medium</option>
+                    <option value="gpt2-medium">gpt2-medium</option>
+                    <option value="EleutherAI/gpt-neo-1.3B">EleutherAI/gpt-neo-1.3B</option>
+                </select>
+                <button class="btn btn-outline-secondary" type="submit">ASK</button>
+            </div>
+        </form>
+    </div>    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/recorderjs/0.1.0/recorder.min.js"></script>
+    <script>
+        document.getElementById("start-recording").onclick = function() {
+    if (recorder && recorder.recording) {
+        recorder.stop();
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => {
+                stream.getTracks().forEach(track => track.stop());
+            });
+
+        recorder.exportWAV(function(blob) {
+            uploadAudioBlob(blob);
+            document.getElementById("start-recording").textContent = "Start Recording";
+        });
+    } else {
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => {
+                const audioContext = new AudioContext();
+                const input = audioContext.createMediaStreamSource(stream);
+                recorder = new Recorder(input, { numChannels: 1 });
+                recorder.record();
+                document.getElementById("start-recording").textContent = "Stop Recording";
+            })
+            .catch(error => console.error(error));
+    }
+};
+
+function uploadAudioBlob(blob) {
+    const formData = new FormData();
+    formData.append("audio_file", blob, "recording.wav");
+
+    fetch("/", {
+        method: "POST",
+        body: formData,
+    })
+    .then(response => response.text())
+    .then(data => {
+        console.log("Upload successful");
+    })
+    .catch((error) => {
+        console.error("Error:", error);
+    });
+}
+    </script>
+    </body>
+    
+</html>

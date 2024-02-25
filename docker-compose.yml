@@ -1,9 +1,26 @@
 version: '3.8'
 services:
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    container_name: ${CONTAINER_B}
+    environment:
+      - FLASK_APP=${FLASK_APP_API}
+      - FLASK_ENV=${FLASK_ENV}
+    ports:
+      - ${FLASK_API_PORT}:${FLASK_API_PORT}
+    restart: on-failure:0
+    volumes:
+      - .:/api
+    depends_on:
+      - weaviate
+    env_file:
+      - .env
   web:
     build:
       context: .
-      dockerfile: Dockerfile.web
+      dockerfile: app/Dockerfile
     container_name: ${CONTAINER_A}
     environment:
       - FLASK_APP=${FLASK_APP}
@@ -14,7 +31,7 @@ services:
     volumes:
       - .:/app
     depends_on:
-      - weaviate
+      - api
     env_file:
       - .env
   weaviate:
