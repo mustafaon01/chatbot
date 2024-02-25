@@ -23,7 +23,7 @@ Chatbot with changable llm models and speech-to-text, text-to-speech features.
 
 # Usage
 ```sh 
-git clone 
+git clone https://github.com/mustafaon01/chatbot.git
 ```
 ```sh 
 cd chatbot 
