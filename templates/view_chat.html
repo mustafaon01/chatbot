@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat Details</title>
+</head>
+<body>
+    <h2>Chat Details - Chat #{{ chat_index + 1 }}</h2>
+    <div>
+        {% for entry in chat %}
+            <div><b>User:</b> {{ entry.user_input }}</div>
+            <div><b>{{entry.model}}:</b> {{ entry.response }}
+                {% if entry.audio_output_file %}
+                <audio controls>
+                    <source src="/{{ entry.audio_output_file }}" type="audio/wav">
+                    Your browser does not support the audio element.
+                </audio>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+    <a href="/">Back to Home</a>
+</body>
+</html>
