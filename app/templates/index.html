@@ -43,7 +43,6 @@
                     <audio controls>
                         <h5>"{{ entry.audio_output_file }}"</h5>
                         <audio src="{{ url_for('static', filename='uploads/' + entry.audio_output_file) }}" controls></audio>
-                        Your browser does not support the audio element.
                     </audio>
                     {% endif %}
                 </div>
