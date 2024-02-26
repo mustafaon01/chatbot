@@ -1,5 +1,3 @@
-# chatbot
-
 # Overview
 Basic chatbot which chat with AI. AI is llm models which user can choose. Also, chat stores in vector database and each question is searched 
 with vector embeddings and find most relevant old answer that model already response. This search technique is semantic search.
@@ -50,7 +48,7 @@ variables in .env.
 
 # My Earnings
 - Learn why vector database is important
-- HuggingFace transformers library which called state-of-art
+- HuggingFace transformers library which called state-of-the-art
 - Docker orchestration
 - What is semantic search, vector embeddings
 - king - man + woman ≈ queen
