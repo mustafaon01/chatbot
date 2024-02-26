@@ -53,6 +53,7 @@ variables in .env.
 - HuggingFace transformers library which called state-of-art
 - Docker orchestration
 - What is semantic search, vector embeddings
+- king - man + woman ≈ queen
 
 # Usage
 ```sh 
