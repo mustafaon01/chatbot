@@ -1,26 +1,26 @@
-version: '3.8'
+version: '3.8' # Specifies the version of the Compose file format
 services:
   api:
-    build:
-      context: .
-      dockerfile: api/Dockerfile
-    container_name: ${CONTAINER_B}
-    environment:
+    build: # Defines configuration options related to building the Docker image
+      context: . # Specifies the build context
+      dockerfile: api/Dockerfile # Specifies the Dockerfile to use for building the image
+    container_name: ${CONTAINER_B} # Sets a custom container name
+    environment: # Defines environment variables for the container
       - FLASK_APP=${FLASK_APP_API}
       - FLASK_ENV=${FLASK_ENV}
-    ports:
+    ports: # Maps port ${FLASK_API_PORT} of the container to port ${FLASK_API_PORT} on the host
       - ${FLASK_API_PORT}:${FLASK_API_PORT}
-    restart: on-failure:0
-    volumes:
+    restart: on-failure:0 # restarts the container if it exits with a non-zero code
+    volumes: # Mounts the current directory to /api inside the container
       - .:/api
-    depends_on:
+    depends_on: # depends on weaviate service, so it will start after weaviate
       - weaviate
-    env_file:
+    env_file: # Specifies the file from which to load environment variables
       - .env
   web:
-    build:
+    build: # Same configuration as the api service
       context: .
-      dockerfile: app/Dockerfile
+      dockerfile: app/Dockerfile # Specifies the Dockerfile to use for building the image
     container_name: ${CONTAINER_A}
     environment:
       - FLASK_APP=${FLASK_APP}
@@ -30,17 +30,17 @@ services:
     restart: on-failure:0
     volumes:
       - .:/app
-    depends_on:
+    depends_on: # depends on api service, so it will start after weaviate
       - api
     env_file:
       - .env
-  weaviate:
-    image: semitechnologies/weaviate:1.23.10
+  weaviate: # Use official Weaviate Docker image
+    image: semitechnologies/weaviate:1.23.10 
     restart: on-failure:0
-    ports:
+    ports: # Exposes Weaviate ports for client access and internal communication
      - ${WEAVIATE_CLIENT_PORT}:${WEAVIATE_CLIENT_PORT}
      - 50051:50051
-    environment:
+    environment: # Sets various Weaviate configuration options via environment variables
       QUERY_DEFAULTS_LIMIT: ${QUERY_DEFAULTS_LIMIT}
       AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: ${AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED}
       PERSISTENCE_DATA_PATH: ${PERSISTENCE_DATA_PATH}

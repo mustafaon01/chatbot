@@ -27,10 +27,12 @@
             {% for chat in chats %}
             <div><a href="/view_chat/{{ loop.index0 }}">Chat #{{ loop.index }}</a></div>
             {% endfor %}
-    
             <a href="/new_chat" class="btn btn-primary mt-2">New Chat</a>
             <a href="/database" class="btn btn-primary mt-2">View Database</a>
-
+            <form action="/clear-session" method="post">
+                <button type="submit">Clear History</button>
+            </form>
+            
         </div>
         <div class="chat-container">
             {% for entry in current_chat %}
@@ -40,7 +42,7 @@
                     {% if entry.audio_output_file %}
                     <audio controls>
                         <h5>"{{ entry.audio_output_file }}"</h5>
-                        <source src="{{ entry.audio_output_file }}" type="audio/wav">
+                        <audio src="{{ url_for('static', filename='uploads/' + entry.audio_output_file) }}" controls></audio>
                         Your browser does not support the audio element.
                     </audio>
                     {% endif %}

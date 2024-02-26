@@ -1,19 +1,23 @@
-from flask import Flask, request, jsonify, render_template, session, redirect, url_for
+from flask import Flask, request, render_template, session, redirect, url_for
+from werkzeug.utils import secure_filename
+from SpeechServices import SpeechServices
+from Logger import *
+from datetime import datetime
+
 import os
 import dotenv
 import requests
-from werkzeug.utils import secure_filename
-from stt import transcribe_audio, synthesize_text, transcribe_audio_blob
-from Logger import *
-import uuid
-from datetime import datetime
-from Filters import *
 
 
 # Start log config
 Logger.setup_logging()
 dotenv.load_dotenv()
-
+''' 
+Get response from chatbot API 
+param: model_name - name of the model
+param: user_input - user input(question)
+return: chatbot_respone - response from chatbot API as string
+'''
 def get_response_from_chatbot_api(model_name, user_input)->str:
     url = f"http://{os.getenv('CONTAINER_B')}:{os.getenv('FLASK_API_PORT')}/chat"
     headers = {'content-type': 'application/json'}
@@ -26,6 +30,8 @@ def get_response_from_chatbot_api(model_name, user_input)->str:
         logging.error("Error communicating with chatbot API. Please try again.")
         return "Error communicating with chatbot API. Please try again."
 
+
+''' Send request API to create schema in Weaviate '''
 def send_request_to_create_schema():
     url = f"http://{os.getenv('CONTAINER_B')}:{os.getenv('FLASK_API_PORT')}/create_weaviate_schema"
     ''' Due to depends on problem, we need to retry the request until the server is up and running.'''
@@ -41,6 +47,8 @@ def send_request_to_create_schema():
     
     logging.info(response.json()['message'])
 
+
+''' Get all data in POST request and store as dict'''
 def get_files_from_UI(request):
     request_files = {}
     request_files['user_input'] = request.form.get('user_input', '')
@@ -49,11 +57,12 @@ def get_files_from_UI(request):
     return request_files
 
 
+''' Create Flask app '''
 def create_app():
-    app = Flask(__name__)
+    app = Flask(__name__, static_folder='/app/static')
     app.secret_key = os.getenv('FLASK_SECRET_KEY')
     app.config['UPLOAD_FOLDER'] = os.getenv('AUDIO_MEDIA_DIR')
-    # os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
     ''' Send request API to create schema in Weaviate '''
     send_request_to_create_schema()
@@ -70,15 +79,13 @@ def create_app():
             request_files = get_files_from_UI(request)
             if request_files['user_input']:
                 ''' Get response from chatbot API'''
-                if ProfanityChecker.check_profanity(request_files['user_input']):
-                    return jsonify({'error': 'Please do not use profanity.'}), 400
                 response = get_response_from_chatbot_api(request_files['model_selected'], request_files['user_input'])
-                audio_output_file = synthesize_text(response, os.path.join(app.config['UPLOAD_FOLDER'], f'output_{datetime.now().strftime("%Y%m%d%H%M%S")}.wav'))
-                session['current_chat'].append({'user_input': request_files['user_input'], 'response': response, 'audio_output_file': audio_output_file, 'model': request_files['model_selected']})
+                audio_file_name = f'output_{datetime.now().strftime("%Y%m%d%H%M%S")}.wav'
+                audio_output_file = SpeechServices.synthesize_text(response, os.path.join(app.config['UPLOAD_FOLDER'], audio_file_name))
+                session['current_chat'].append({'user_input': request_files['user_input'], 'response': response, 'audio_output_file': audio_file_name, 'model': request_files['model_selected']})
             elif 'audio_file' in request.files:
                 audio_file = request_files['audio_file']
-                #audio_content = audio_file.read()
-                user_input = transcribe_audio_blob(audio_file)
+                user_input = SpeechServices.transcribe_audio_blob(audio_file)
                 response = get_response_from_chatbot_api(request_files['model_selected'], user_input)
                 session['current_chat'].append({'user_input': user_input, 'response': response, 'audio_output_file': audio_output_file, 'model': request_files['model_selected']})
 
@@ -93,13 +100,22 @@ def create_app():
             session['current_chat'] = []
             session.modified = True
         return redirect(url_for('home'))
-  
+    
+    ''' View chat history in basic UI '''
     @app.route('/view_chat/<int:chat_index>', methods=['GET'])
     def view_chat(chat_index):
         if 'chats' in session and chat_index < len(session['chats']):
             requested_chat = session['chats'][chat_index]
             return render_template('view_chat.html', chat=requested_chat, chat_index=chat_index)
         return redirect(url_for('home'))
+
+    ''' Clear session '''
+    @app.route('/clear-session', methods=['POST'])
+    def clear_session():
+        session.pop('current_chat', None) 
+        session.pop('chats', None)
+        return redirect(url_for('home'))
+
     
     ''' View chat history with table '''
     @app.route('/database', methods=['GET'])

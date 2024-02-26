@@ -4,7 +4,6 @@ from sentence_transformers import SentenceTransformer
 from weaviate import Client
 
 import json
-import warnings
 import dotenv
 import os
 
@@ -12,11 +11,12 @@ import os
 # Start log config
 Logger.setup_logging()
 dotenv.load_dotenv()
-warnings.filterwarnings(action='ignore', category=ResourceWarning)
 
+''' Create Weaviate client '''
 weaviate_client = Client(url=f"{os.getenv('WEAVIATE_CLIENT_URL')}:{os.getenv('WEAVIATE_CLIENT_PORT')}",
                          additional_headers={'X-HuggingFace-Api-Key': os.getenv('X_HUGGINGFACE_API_KEY')})
 
+''' Chatbot class '''
 class Chatbot:
     def __init__(self, model_name="microsoft/DialoGPT-medium"):
         self.model_name = model_name
@@ -26,6 +26,7 @@ class Chatbot:
         self.sentence_transformer = SentenceTransformer(self.sentence_model)
         self.schema_name = os.getenv('SCHEMA_NAME')
     
+    ''' Create Weaviate schema and vectorizer module that add vector embeddings to the schema '''
     def create_weaviate_schema(self):
         schema = {
         "classes": [
@@ -60,22 +61,24 @@ class Chatbot:
             weaviate_client.schema.create(schema)
             logging.info("Schema created.")
     
+    ''' Print json data in a readable format for debugging '''
     def json_print(self, data):
         print(json.dumps(data, indent=2))
     
+    ''' Load the question and answer to Weaviate schema '''
     def laod_to_weaviate(self, question, answer):
-        if question is not None and answer is not None:
-          
+        if question is not None and answer is not None:  
           object_to_store = {
-                  "question": question,
-                  "answer": answer
-                  }
-          
+                "question": question,
+                "answer": answer
+              }
+
           weaviate_client.data_object.create(data_object=object_to_store, class_name=self.schema_name)
           logging.info("Loaded to Weaviate successfully.")
         else:
             logging.info("Question and answer is None.")
 
+    ''' Generate response from the model if no similar question found in Weaviate according to semantic search results'''
     def generate_response_from_model(self, question):
         try:
           input_ids = self.tokenizer.encode(question + self.tokenizer.eos_token, return_tensors='pt')
@@ -95,6 +98,7 @@ class Chatbot:
             logging.error(f"Error during the generating response: {e}")
             return "Sorry, I encountered an error while generating a response."
 
+    ''' Get similar questions from Weaviate using semantic search '''
     def get_similar_questions_from_weaviate(self, question):
         question_embedding = self.sentence_transformer.encode(question, convert_to_tensor=True).tolist()
         # semantic search
@@ -103,6 +107,8 @@ class Chatbot:
 
         results = search_results['data']['Get'][self.schema_name]
 
+        """ Filter the results with certainty score greater than 0.95 
+        because in database we have limited data and we want to get the most similar question """
         filtered_results = [
             result for result in results
             if result['_additional']['certainty'] >= 0.95
@@ -112,11 +118,13 @@ class Chatbot:
         if filtered_results:
             logging.info("Found similar question in Weaviate.")
             result = filtered_results[0]
+            """ Logging the first result """
             logging.info(f"result: {result}")
             return result
         else:
             return None
     
+    ''' Chat method to get the response from the model or Weaviate '''
     def chat(self, question):
         similar_question = self.get_similar_questions_from_weaviate(question)
         if similar_question:
@@ -126,6 +134,7 @@ class Chatbot:
             logging.info("No similar interaction found. Generating a new response.")
             answer = self.generate_response_from_model(question)
         
+        ''' Load the question and answer to Weaviate schema '''
         self.laod_to_weaviate(question, answer)
         return answer
      

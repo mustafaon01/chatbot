@@ -1,7 +1,13 @@
 # chatbot
 
 # Overview
-Chatbot with changable llm models and speech-to-text, text-to-speech features. 
+Basic chatbot which chat with AI. AI is llm models which user can choose. Also, chat stores in vector database and each question is searched 
+with vector embeddings and find most relevant old answer that model already response. This search technique is semantic search.
+
+# Software Architecture
+- There are 3 containers which are weaviate, flask-api, flask-web-server. Flask-web-server can request to weaviate-api for getting stored data. Also, it can 
+request Flask-api to chat models, choose model and create Weaviate schema. All containers orchestration was done with docker-compose. Store all critical and changeable
+variables in .env. 
 
 # Used Technologies
 - Weaviate vectoral database to store chat history with their vector values
@@ -11,25 +17,57 @@ Chatbot with changable llm models and speech-to-text, text-to-speech features.
 - HuggingFace transformers library
 - HuggingFace sentence_transformers library
 - Flask
+- Recorder.js
 
 # Why This Technologies
-- Weaviate: has official image for docker, use RESTApi, connect huggingface modules
-- HuggingFace repositories and transformers: Change LLM models easily, tokenizer automaticly, create vector embeddings and can semantic search
+- Weaviate: has official image for docker, use RESTful API, connect huggingface modules with schema.
+- HuggingFace repositories and transformers: Change LLM models easily, tokenizer automaticly, create vector embeddings and can semantic search.
+- Flask is powerfull microservice application, I used for creating api end-points end web service. 
+- Flask sessions provide a way to store information specific to a user from one request to the next.
+- Recorder.js; We should use js user-client base system to get data(i.e. audio file) so, I used this js library to get audio record.
 
-# Possible Errors
+# Included LLM Models
+- microsoft/DialoGPT-medium
+- gpt2-medium
+- EleutherAI/gpt-neo-1.3B
+- If you want to add new model, you can add in index.html after line64.
+
+# Possible Errors and Warnings
 - modules timeout(waiting to restart container)
+- Sometimes server get 500 beacuse of models, you can refresh the page and try again.
 - STT didn't recognize the audio file
-- 
+- TTS doesn't find to audio file because of flask. However, you can play tts audios in your host project path real-time.
+    Also, TTS can convert error messages.
+- sometimes transformers modules timeout, we need to refresh the page.
+- if change the flask port in .env file you need to change also only api(or app)/Dockerfile. [ONLY FOR FLASK PORT]
+- Filtering methods are writen but not implemented in app.py because models don't work quickly and filters method make them more slower.
+- You can see logs in /logs.
+
+# Extentions
+- You can listen TTS audios in app/static/uploads in this repository.
+- You can also find screenshot about last audios chat history
+- Flask session is basically can store chat history, also we can delete using delete button in UI.
+
+# My Earnings
+- Learn why vector database is important
+- HuggingFace transformers library which called state-of-art
+- Docker orchestration
+- What is semantic search, vector embeddings
 
 # Usage
 ```sh 
 git clone https://github.com/mustafaon01/chatbot.git
 ```
+
 ```sh 
 cd chatbot 
 ```
+
 ```sh 
 docker-compose up --build 
 ```
 
+[Link Text]("http://localhost:8000")
 
+- wait to build approximatly 6mins.
+- You can change the llm model, if you change the model, then please wait download the model. (you can follow on docker-compose terminal screen)
