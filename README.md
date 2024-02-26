@@ -38,8 +38,8 @@ variables in .env.
 - STT didn't recognize the audio file
 - TTS doesn't find to audio file because of flask. However, you can play tts audios in your host project path real-time.
     Also, TTS can convert error messages.
-- sometimes transformers modules timeout, we need to refresh the page.
-- if change the flask port in .env file you need to change also only api(or app)/Dockerfile. [ONLY FOR FLASK PORT]
+- Sometimes transformers modules timeout, we need to refresh the page.
+- If change the flask port in .env file you need to change also only api(or app)/Dockerfile. [ONLY FOR FLASK PORT]
 - Filtering methods are writen but not implemented in app.py because models don't work quickly and filters method make them more slower.
 - You can see logs in /logs.
 
@@ -67,7 +67,11 @@ cd chatbot
 docker-compose up --build 
 ```
 
-[Link Text]("http://localhost:8000")
+- Open this url on your browser
 
-- wait to build approximatly 6mins.
+```
+http://localhost:8000
+```
+
+- Wait to build approximatly 6mins.
 - You can change the llm model, if you change the model, then please wait download the model. (you can follow on docker-compose terminal screen)
