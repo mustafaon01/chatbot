@@ -35,7 +35,7 @@ services:
     env_file:
       - .env
   weaviate: # Use official Weaviate Docker image
-    image: semitechnologies/weaviate:1.23.10 
+    image: cr.weaviate.io/semitechnologies/weaviate:1.23.10 
     restart: on-failure:0
     ports: # Exposes Weaviate ports for client access and internal communication
      - ${WEAVIATE_CLIENT_PORT}:${WEAVIATE_CLIENT_PORT}
